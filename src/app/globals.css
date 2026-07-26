@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: light;
+  --page: #f4f5f7;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e3e6ea;
+  --brand: #047857;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Tabular figures keep money columns from jittering as values change. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
