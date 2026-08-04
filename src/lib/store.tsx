@@ -50,6 +50,9 @@ export function DeniProvider({ children }: { children: React.ReactNode }) {
   const [debts, setDebts] = useState<Debt[]>([])
 
   useEffect(() => {
+    // localStorage only exists client-side, so the initial load has to happen
+    // in an effect rather than a lazy initializer (which would run during SSR).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCustomers(read<Customer>(CUSTOMERS_KEY))
     setDebts(read<Debt>(DEBTS_KEY))
     setReady(true)

@@ -314,6 +314,9 @@ function RemindSheet({
   }, [customerName, balance, description, dueDate, late, brokenPromises, tone, language])
 
   useEffect(() => {
+    // Draft a first message as soon as the sheet opens; generate() sets state
+    // via the AI call, which is the point of running it on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     generate()
   }, [generate])
 
