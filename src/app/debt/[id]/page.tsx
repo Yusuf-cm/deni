@@ -1,5 +1,6 @@
 'use client'
 
+import { isDuplicatePayment, parsePositiveAmount } from '@/lib/amount'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -183,6 +184,7 @@ export default function DebtDetailPage() {
           customerName={customer.name}
           phone={customer.phone}
           debtId={debt.id}
+          recordedRefs={debts.flatMap(d => d.payments.flatMap(p => p.mpesaRef ? [p.mpesaRef] : []))}
           onPay={(p) => {
             addPayment(debt.id, p)
             setSheet(null)
@@ -472,6 +474,7 @@ function PaymentSheet({
   customerName,
   phone,
   debtId,
+  recordedRefs,
   onPay,
 }: {
   onClose: () => void
@@ -479,6 +482,7 @@ function PaymentSheet({
   customerName: string
   phone: string
   debtId: string
+  recordedRefs: string[]
   onPay: (p: {
     amount: number
     date: string
@@ -513,8 +517,9 @@ function PaymentSheet({
     }
   }
 
-  const value = Number(amount.replace(/[^\d.]/g, ''))
+  const value = parsePositiveAmount(amount)
   const overpay = value > balance
+  const duplicate = isDuplicatePayment(recordedRefs, parsed?.mpesaRef)
 
   // The SMS names a payer; warn if it doesn't look like this debt's customer.
   const payerMismatch = Boolean(
@@ -526,7 +531,7 @@ function PaymentSheet({
   )
 
   function submit() {
-    if (!(value > 0)) return
+    if (!(value > 0) || duplicate) return
     onPay({
       amount: value,
       date,
@@ -595,6 +600,7 @@ function PaymentSheet({
         )}
 
         {error && <Notice tone="red">{error}</Notice>}
+        {duplicate && <Notice tone="red">This M-Pesa reference is already recorded. Check the payment history.</Notice>}
 
         <Field
           label="Amount received (KES)"
@@ -623,7 +629,7 @@ function PaymentSheet({
           <Button variant="secondary" onClick={() => setAmount(String(balance))}>
             Paid in full
           </Button>
-          <Button className="flex-1" onClick={submit} disabled={!(value > 0)}>
+          <Button className="flex-1" onClick={submit} disabled={!(value > 0) || duplicate}>
             Record {value > 0 ? kes(Math.min(value, balance)) : 'payment'}
           </Button>
         </div>
@@ -631,3 +637,4 @@ function PaymentSheet({
     </Sheet>
   )
 }
+
