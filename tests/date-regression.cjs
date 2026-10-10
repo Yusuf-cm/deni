@@ -6,8 +6,15 @@ const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const output = mkdtempSync(join(tmpdir(), 'deni-dates-'))
 try {
-  execFileSync(process.execPath, ['node_modules/typescript/bin/tsc', 'src/lib/ai/heuristic.ts', '--outDir', output, '--module', 'commonjs', '--target', 'es2020', '--skipLibCheck'], { stdio: 'inherit' })
+  execFileSync(process.execPath, ['node_modules/typescript/bin/tsc', 'src/lib/ai/heuristic.ts', 'src/lib/amount.ts', '--outDir', output, '--module', 'commonjs', '--target', 'es2020', '--skipLibCheck'], { stdio: 'inherit' })
   const { heuristicParseReply, heuristicExtract, heuristicRemind } = require(join(output, 'ai/heuristic.js'))
+  const { parsePositiveAmount, isDuplicatePayment } = require(join(output, 'amount.js'))
+  for (const input of ['-1', '-1,000', 'invalid', '1abc', 'Infinity', '', '0']) assert.equal(parsePositiveAmount(input), 0, input)
+  assert.equal(parsePositiveAmount('1,000'), 1000)
+  assert.equal(parsePositiveAmount('250.50'), 250.5)
+  assert.equal(isDuplicatePayment(['TEST123456'], 'test123456'), true)
+  assert.equal(isDuplicatePayment(['TEST123456'], ' OTHER12345 '), false)
+  assert.equal(isDuplicatePayment(['TEST123456']), false)
   const today = '2026-10-10'
   const cases = [
     ['I will pay 2000 on 15 October 2026.', '2026-10-15'],
@@ -29,7 +36,7 @@ try {
   assert.match(heuristicRemind({ ...input, language: 'english' }), /^Hi Sample/)
   assert.match(heuristicRemind({ ...input, language: 'swahili' }), /^Habari Sample/)
   assert.match(heuristicRemind({ ...input, language: 'sheng' }), /^Sasa Sample/)
-  console.log('14 date and language regression checks passed')
+  console.log('26 amount, duplicate-reference, date and language regression checks passed')
 } finally {
   rmSync(output, { recursive: true, force: true })
 }
