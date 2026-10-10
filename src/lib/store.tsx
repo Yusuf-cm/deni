@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { isDuplicatePayment } from './amount'
 import { today } from './format'
 import type { Customer, Debt, Language, Payment, Tone } from './types'
 
@@ -108,9 +109,11 @@ export function DeniProvider({ children }: { children: React.ReactNode }) {
   )
 
   const addPayment = useCallback((debtId: string, payment: Omit<Payment, 'id'>) => {
-    setDebts((prev) =>
-      prev.map((d) => {
-        if (d.id !== debtId) return d
+    setDebts((prev) => {
+      const refs = prev.flatMap(d => d.payments.flatMap(p => p.mpesaRef ? [p.mpesaRef] : []))
+      if (!Number.isFinite(payment.amount) || payment.amount <= 0 || isDuplicatePayment(refs, payment.mpesaRef)) return prev
+      return prev.map((d) => {
+        if (d.id !== debtId || d.balance <= 0) return d
         const capped = Math.min(payment.amount, d.balance)
         const payments = [...d.payments, { ...payment, amount: capped, id: uid() }]
         const balance = Math.max(0, d.balance - capped)
@@ -121,7 +124,7 @@ export function DeniProvider({ children }: { children: React.ReactNode }) {
           status: balance === 0 ? 'paid' : 'partial',
         }
       })
-    )
+    })
   }, [])
 
   const addPromise = useCallback((debtId: string, promisedDate: string) => {
@@ -176,3 +179,4 @@ export function useDeni(): DeniContext {
   if (!ctx) throw new Error('useDeni must be used inside DeniProvider')
   return ctx
 }
+
