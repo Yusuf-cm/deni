@@ -1,5 +1,6 @@
 'use client'
 
+import { parsePositiveAmount } from '@/lib/amount'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -45,7 +46,7 @@ export default function NewDebtPage() {
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
 
   const normalizedPhone = normalizePhone(form.phone)
-  const amountValue = Number(form.amount.replace(/[^\d.]/g, ''))
+  const amountValue = parsePositiveAmount(form.amount)
 
   const errors = {
     customerName: form.customerName.trim() ? '' : 'Who owes the money?',
@@ -295,3 +296,4 @@ export default function NewDebtPage() {
     </div>
   )
 }
+
