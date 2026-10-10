@@ -136,6 +136,7 @@ export function Segmented<T extends string>({
         <button
           key={o.value}
           type="button"
+          aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={`min-h-10 flex-1 rounded-lg px-3 text-sm font-semibold transition-colors ${
             value === o.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
@@ -220,3 +221,4 @@ export function Notice({
     </div>
   )
 }
+

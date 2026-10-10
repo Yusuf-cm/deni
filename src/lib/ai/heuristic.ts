@@ -58,12 +58,26 @@ function findAmount(text: string): number | null {
 function findDueDate(text: string, today: string): { date: string | null; explicit: boolean } {
   const lower = text.toLowerCase()
 
+  const validDate = (year: number, month: number, day: number) => {
+    const parsed = new Date(year, month - 1, day)
+    return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day
+      ? toISODate(parsed) : null
+  }
+  const iso = lower.match(/\b(\d{4})-(\d{2})-(\d{2})\b/)
+  if (iso) return { date: validDate(Number(iso[1]), Number(iso[2]), Number(iso[3])), explicit: true }
+
+  const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+  const named = lower.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\.?\s*(\d{4})?\b/)
+  if (named) {
+    const month = months.findIndex((m) => m.startsWith(named[2])) + 1
+    const year = named[3] ? Number(named[3]) : parseISO(today).getFullYear()
+    return { date: validDate(year, month, Number(named[1])), explicit: true }
+  }
   const explicitDate = lower.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/)
   if (explicitDate) {
     const [, d, m, y] = explicitDate
     const year = y ? (y.length === 2 ? 2000 + Number(y) : Number(y)) : parseISO(today).getFullYear()
-    const parsed = new Date(year, Number(m) - 1, Number(d))
-    if (!Number.isNaN(parsed.getTime())) return { date: toISODate(parsed), explicit: true }
+    return { date: validDate(year, Number(m), Number(d)), explicit: true }
   }
   if (/(mwisho wa mwezi|end of (the )?month|end month|mwishoni mwa mwezi)/.test(lower)) {
     return { date: endOfCurrentMonth(today), explicit: true }
@@ -216,9 +230,9 @@ export function heuristicParseReply(text: string, today: string) {
     return {
       intent: 'promise' as const,
       promisedDate: due.explicit ? due.date : null,
-      summary: due.explicit
+      summary: due.date
         ? `Customer promises to pay by ${due.date}.`
-        : 'Customer promises to pay but gave no date — ask them to commit to one.',
+        : 'Customer promises to pay, but a valid date could not be read — confirm it manually.',
     }
   }
   return { intent: 'other' as const, promisedDate: null, summary: 'No payment commitment in this reply.' }
@@ -316,3 +330,4 @@ export function heuristicExplain(debts: RankedRef[]) {
 }
 
 export { daysBetween }
+
