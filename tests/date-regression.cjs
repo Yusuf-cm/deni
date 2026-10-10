@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Standalone CommonJS regression runner loads temporary CommonJS compiler output. */
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const { mkdtempSync, rmSync } = require('node:fs')
